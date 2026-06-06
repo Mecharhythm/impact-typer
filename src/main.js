@@ -42,7 +42,6 @@ const recentFilesList = document.getElementById('recent-files');
 const btnImpact   = document.getElementById('btn-impact-toggle');
 const impactState = btnImpact.querySelector('.impact-state');
 const btnAi       = document.getElementById('btn-ai');
-const btnChallenge= document.getElementById('btn-challenge');
 const btnPdf      = document.getElementById('btn-pdf');
 const btnCmd      = document.getElementById('btn-cmd');
 const btnPreview  = document.getElementById('btn-preview');
@@ -725,57 +724,7 @@ function exportToPDF() {
 }
 btnPdf.addEventListener('click', exportToPDF);
 
-// ─── v6: Gamification (Challenge Mode) ────────────────────
-let challengeActive = false;
-let challengeTime = 60;
-let challengeTimerInterval = null;
-let challengeStartChars = 0;
-
-function startChallenge() {
-  if (challengeActive) return;
-  challengeActive = true;
-  challengeTime = 60;
-  challengeStartChars = getEditorText().length;
-  challengeOverlay.classList.add('active');
-  challengeTimerEl.textContent = challengeTime;
-  challengeScoreEl.textContent = '0';
-  
-  challengeTimerInterval = setInterval(() => {
-    challengeTime--;
-    challengeTimerEl.textContent = challengeTime;
-    
-    // Calculate current WPM roughly: ((chars - startChars) / 5) / (elapsed_minutes)
-    const elapsedMins = (60 - challengeTime) / 60;
-    const currentChars = getEditorText().length;
-    const typedWords = Math.max(0, (currentChars - challengeStartChars) / 5);
-    const wpm = elapsedMins > 0 ? Math.round(typedWords / elapsedMins) : 0;
-    challengeScoreEl.textContent = wpm;
-    
-    if (wpm < 40 && elapsedMins > 0.1) {
-      challengeScoreEl.classList.add('challenge-danger');
-      shake(1);
-    } else {
-      challengeScoreEl.classList.remove('challenge-danger');
-    }
-
-    if (challengeTime <= 0) {
-      endChallenge(wpm);
-    }
-  }, 1000);
-}
-
-function endChallenge(finalWpm) {
-  clearInterval(challengeTimerInterval);
-  challengeActive = false;
-  challengeOverlay.classList.remove('active');
-  challengeScoreEl.classList.remove('challenge-danger');
-  alert(`チャレンジ終了！\nあなたの記録: ${finalWpm} WPM`);
-  if (finalWpm > 80) {
-    for (let i=0; i<10; i++) setTimeout(() => particles.burst(Math.random()*innerWidth, Math.random()*innerHeight, 'nuclear', 3, 50), i*100);
-    sound.playNuclear(3);
-  }
-}
-btnChallenge.addEventListener('click', startChallenge);
+// (Challenge Mode removed)
 
 // ─── v6: WebLLM Local AI ──────────────────────────────────
 let engine = null;
