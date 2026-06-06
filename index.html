@@ -43,6 +43,9 @@
             <svg id="icon-theme-light" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             <svg id="icon-theme-dark" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
+          <button class="tool-btn" id="btn-preview" title="プレビュー切替 (Ctrl+Shift+P)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
           <button class="tool-btn" id="btn-find" title="検索 (Ctrl+F)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </button>
@@ -129,36 +132,23 @@
           </div>
         </aside>
 
-        <!-- ======= Editor ======= -->
+        <!-- ======= Editor & Tabs ======= -->
         <main id="editor-area">
-        <div id="editor-wrap">
-          <!-- Markdown toolbar -->
-          <div id="md-toolbar">
-            <button class="md-btn" data-cmd="bold"      title="太字 (Ctrl+B)"><strong>B</strong></button>
-            <button class="md-btn" data-cmd="italic"    title="斜体 (Ctrl+I)"><em>I</em></button>
-            <button class="md-btn" data-cmd="strike"    title="取り消し線"><s>S</s></button>
-            <span class="md-sep"></span>
-            <button class="md-btn" data-cmd="h1"        title="見出し1"># H1</button>
-            <button class="md-btn" data-cmd="h2"        title="見出し2">## H2</button>
-            <button class="md-btn" data-cmd="h3"        title="見出し3">### H3</button>
-            <span class="md-sep"></span>
-            <button class="md-btn" data-cmd="ul"        title="箇条書き">• UL</button>
-            <button class="md-btn" data-cmd="ol"        title="番号付き">1. OL</button>
-            <button class="md-btn" data-cmd="quote"     title="引用">" Quote</button>
-            <button class="md-btn" data-cmd="code"      title="コード">`Code`</button>
-            <button class="md-btn" data-cmd="link"      title="リンク (Ctrl+K)">🔗 Link</button>
-            <span class="md-sep"></span>
-            <button class="md-btn" data-cmd="hr"        title="区切り線">— HR</button>
+          <div id="tabs-bar">
+            <!-- Tabs populate here -->
           </div>
-          <textarea
-            id="editor"
-            placeholder="書き始めてください..."
-            spellcheck="false"
-            autocomplete="off"
-            autocorrect="off"
-          ></textarea>
-        </div>
-      </main>
+          
+          <div id="editor-split">
+            <div id="editor-wrap">
+              <!-- CodeMirror injects here -->
+              <div id="editor-container"></div>
+            </div>
+            
+            <div id="preview-wrap" style="display:none">
+              <div id="preview-container" class="markdown-body"></div>
+            </div>
+          </div>
+        </main>
 
       <!-- ======= Status bar ======= -->
       <footer id="statusbar">
@@ -396,6 +386,13 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Command Palette modal -->
+    <div id="cmd-palette-overlay"></div>
+    <div id="cmd-palette">
+      <input type="text" id="cmd-input" placeholder="コマンド または ファイル名 (Ctrl+P)..." autocomplete="off" />
+      <div id="cmd-results"></div>
     </div>
 
     <div id="combo-popup"></div>

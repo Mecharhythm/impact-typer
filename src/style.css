@@ -490,40 +490,136 @@ mark.find-highlight {
   line-height: 1.5;
 }
 
-/* ─── Editor area ───────────────────── */
+/* ─── Editor area & Tabs ──────────────── */
 #editor-area {
-  flex: 1; overflow: auto;
-  display: flex; justify-content: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   background: var(--bg);
   transition: background var(--transition);
-  padding: 0;
+  overflow: hidden;
+}
+
+#tabs-bar {
+  display: flex;
+  height: 36px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+#tabs-bar::-webkit-scrollbar { height: 2px; }
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  min-width: 100px;
+  max-width: 200px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+}
+.tab:hover { background: var(--bg-hover); color: var(--text); }
+.tab.active {
+  background: var(--bg);
+  color: var(--text);
+  border-bottom: 2px solid var(--accent);
+}
+.tab-title {
+  flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tab-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 4px; opacity: 0.6;
+}
+.tab-close:hover { opacity: 1; background: rgba(0,0,0,0.1); }
+
+#editor-split {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 #editor-wrap {
-  width: 100%; max-width: var(--editor-width);
-  display: flex; flex-direction: column;
-  padding: 32px 24px 60px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
 }
 
-#editor {
-  width: 100%; flex: 1;
-  min-height: calc(100vh - var(--toolbar-h) - var(--status-h) - var(--md-toolbar-h) - 120px);
-  border: none; outline: none; resize: none;
-  background: transparent;
-  color: var(--text);
+/* CodeMirror specific overrides */
+#editor-container {
+  flex: 1;
+  overflow: auto;
   font-family: var(--font-editor);
   font-size: var(--editor-size);
   line-height: var(--editor-lh);
-  letter-spacing: 0.01em;
-  caret-color: var(--accent);
-  transition: color var(--transition);
-  user-select: text; -webkit-user-select: text;
 }
-#editor::placeholder { color: var(--text-faint); }
-#editor::selection   { background: var(--accent-bg); }
+.cm-editor { height: 100%; outline: none !important; }
+.cm-scroller { font-family: inherit; }
+.cm-content { padding: 32px 24px 60px; max-width: var(--editor-width); margin: 0 auto; }
 
-/* Typewriter mode */
-body.typewriter-mode #editor-area { padding-top: 30vh; }
+#preview-wrap {
+  flex: 1;
+  border-left: 1px solid var(--border);
+  background: var(--bg-panel);
+  overflow-y: auto;
+  padding: 32px 24px 60px;
+}
+#preview-container {
+  max-width: var(--editor-width);
+  margin: 0 auto;
+  color: var(--text);
+  font-family: var(--font-editor);
+  line-height: 1.6;
+}
+
+/* ─── Command Palette ───────────────── */
+#cmd-palette-overlay {
+  position: fixed; inset: 0; background: var(--bg-overlay);
+  z-index: 800; opacity: 0; pointer-events: none;
+  transition: opacity 0.15s; backdrop-filter: blur(2px);
+}
+#cmd-palette-overlay.open { opacity: 1; pointer-events: all; }
+
+#cmd-palette {
+  position: fixed; top: 20%; left: 50%; transform: translateX(-50%) scale(0.95);
+  width: 600px; max-width: 90vw;
+  background: var(--bg-modal); border: 1px solid var(--border);
+  border-radius: var(--radius); z-index: 801;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  display: flex; flex-direction: column;
+}
+#cmd-palette.open { opacity: 1; pointer-events: all; transform: translateX(-50%) scale(1); }
+
+#cmd-input {
+  width: 100%; border: none; outline: none; background: transparent;
+  padding: 16px 20px; font-size: 16px; color: var(--text);
+  border-bottom: 1px solid var(--border); font-family: var(--font-ui);
+}
+#cmd-results {
+  max-height: 300px; overflow-y: auto; padding: 8px;
+}
+.cmd-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; cursor: pointer; border-radius: var(--radius-sm);
+  color: var(--text-muted); font-size: 13px;
+}
+.cmd-item.selected, .cmd-item:hover {
+  background: var(--accent-bg); color: var(--accent);
+}
+.cmd-item-title { font-weight: 500; }
+.cmd-item-hint { font-size: 11px; opacity: 0.6; }
 
 /* ─── Status bar ────────────────────── */
 #statusbar {
