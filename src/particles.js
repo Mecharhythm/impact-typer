@@ -154,7 +154,7 @@ class TextBurst {
     if (this.life <= 0) return;
     ctx.save();
     ctx.globalAlpha = this.life;
-    ctx.font = `bold ${this.size}px 'Orbitron', sans-serif`;
+    ctx.font = `700 ${this.size}px 'Inter', -apple-system, sans-serif`;
     ctx.fillStyle = this.color;
     ctx.shadowColor = this.color;
     ctx.shadowBlur = 8;
