@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💥 Impact Typer — 爆音・爆破エディタ</title>
+    <meta name="description" content="1文字打つたびに世界が終わる。普通のタイピングをハリウッド映画に変える爆音・爆破エディタ。" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Scanlines overlay -->
+      <div class="scanlines"></div>
+
+      <!-- Particle canvas -->
+      <canvas id="particle-canvas"></canvas>
+
+      <!-- Screen flash overlay -->
+      <div id="flash-overlay"></div>
+
+      <!-- Vignette -->
+      <div class="vignette"></div>
+
+      <!-- Header -->
+      <header id="header">
+        <div class="header-left">
+          <div class="logo">
+            <span class="logo-icon">💥</span>
+            <span class="logo-text">IMPACT<span class="logo-sub">TYPER</span></span>
+          </div>
+          <div class="subtitle">爆音・爆破エディタ v1.0</div>
+        </div>
+        <div class="header-right">
+          <div class="stat-block" id="combo-display">
+            <div class="stat-label">COMBO</div>
+            <div class="stat-value" id="combo-value">0</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label">CHARS</div>
+            <div class="stat-value" id="char-count">0</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-label">INTENSITY</div>
+            <div class="stat-value" id="intensity-label">CALM</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Intensity bar -->
+      <div id="intensity-bar-container">
+        <div id="intensity-bar"></div>
+        <div id="intensity-bar-glow"></div>
+      </div>
+
+      <!-- Main editor area -->
+      <main id="editor-container">
+        <div id="editor-wrapper">
+          <div id="editor-label">
+            <span class="blink">▶</span> CLASSIFIED DOCUMENT — TOP SECRET
+          </div>
+          <textarea
+            id="editor"
+            placeholder="ここに入力してください...（世界が終わる準備をしろ）"
+            spellcheck="false"
+            autocomplete="off"
+          ></textarea>
+          <div id="cursor-glow"></div>
+        </div>
+      </main>
+
+      <!-- Bottom bar -->
+      <footer id="footer">
+        <div class="footer-left">
+          <div class="mode-selector">
+            <button class="mode-btn active" data-mode="explosion" id="btn-explosion">💣 EXPLOSION</button>
+            <button class="mode-btn" data-mode="laser" id="btn-laser">⚡ LASER</button>
+            <button class="mode-btn" data-mode="mechanical" id="btn-mechanical">⌨️ MECH</button>
+            <button class="mode-btn" data-mode="nuclear" id="btn-nuclear">☢️ NUCLEAR</button>
+          </div>
+        </div>
+        <div class="footer-right">
+          <button id="btn-clear" class="action-btn danger">🗑 CLEAR</button>
+          <button id="btn-mute" class="action-btn">🔊 MUTE</button>
+          <button id="btn-copy" class="action-btn">📋 COPY</button>
+        </div>
+      </footer>
+
+      <!-- Combo popup -->
+      <div id="combo-popup"></div>
+
+      <!-- Achievement toast -->
+      <div id="achievement-toast"></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
