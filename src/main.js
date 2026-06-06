@@ -42,6 +42,7 @@ const recentFilesList = document.getElementById('recent-files');
 const btnImpact   = document.getElementById('btn-impact-toggle');
 const impactState = btnImpact.querySelector('.impact-state');
 const btnTheme    = document.getElementById('btn-theme');
+const btnCmd      = document.getElementById('btn-cmd');
 const btnPreview  = document.getElementById('btn-preview');
 const btnFind     = document.getElementById('btn-find');
 const btnStats    = document.getElementById('btn-stats');
@@ -634,6 +635,7 @@ const COMBOS = {
 
 // ─── Command Palette ──────────────────────────────────────
 let cmdItems = [];
+let baseCmdItems = []; // Populated by extensions below
 let cmdSelectedIndex = 0;
 
 function openCommandPalette() {
@@ -644,6 +646,9 @@ function openCommandPalette() {
   cmdItems.push({ title: 'Theme: Toggle Dark Mode', hint: 'ダークテーマ切替', action: () => applyTheme(cfg.theme==='dark'?'light':'dark') });
   cmdItems.push({ title: 'Preview: Toggle Split View', hint: 'プレビュー切替', action: () => btnPreview.click() });
   cmdItems.push({ title: 'Impact: Toggle Effects', hint: 'エフェクト切替', action: () => btnImpact.click() });
+  
+  // 3. Base commands (Zen, AI, PDF, etc)
+  cmdItems.push(...baseCmdItems);
 
   cmdInput.value = '';
   renderCommandResults();
@@ -705,7 +710,7 @@ function toggleZenMode() {
     editorView.dispatch({ effects: EditorView.scrollIntoView(editorView.state.selection.main, {y: "center"}) });
   }
 }
-cmdItems.push({ title: 'Zen Mode: Toggle', hint: '究極の集中モード', action: toggleZenMode });
+baseCmdItems.push({ title: 'Zen Mode: Toggle', hint: '究極の集中モード', action: toggleZenMode });
 
 // ─── v6: PDF Export ───────────────────────────────────────
 function exportToPDF() {
@@ -723,7 +728,7 @@ function exportToPDF() {
   };
   html2pdf().set(opt).from(element).save();
 }
-cmdItems.push({ title: 'Export: PDF', hint: 'プレビューをPDF化', action: exportToPDF });
+baseCmdItems.push({ title: 'Export: PDF', hint: 'プレビューをPDF化', action: exportToPDF });
 
 // ─── v6: Gamification (Challenge Mode) ────────────────────
 let challengeActive = false;
@@ -775,14 +780,14 @@ function endChallenge(finalWpm) {
     sound.playNuclear(3);
   }
 }
-cmdItems.push({ title: 'Challenge: Start 60s WPM Test', hint: 'タイピングテスト', action: startChallenge });
+baseCmdItems.push({ title: 'Challenge: Start 60s WPM Test', hint: 'タイピングテスト', action: startChallenge });
 
 // ─── v6: WebLLM Local AI ──────────────────────────────────
 let engine = null;
 let aiLoading = false;
 
 btnAiClose.addEventListener('click', () => aiPanel.classList.remove('open'));
-cmdItems.push({ title: 'AI Assistant: Toggle Panel', hint: 'ローカルAIを開く', action: () => aiPanel.classList.toggle('open') });
+baseCmdItems.push({ title: 'AI Assistant: Toggle Panel', hint: 'ローカルAIを開く', action: () => aiPanel.classList.toggle('open') });
 
 function appendAiMessage(role, text) {
   const el = document.createElement('div');
@@ -864,6 +869,7 @@ aiInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') btnAiSend.cli
 
 // ─── Settings & Setup ─────────────────────────────────────
 function bindSettings() {
+  btnCmd.addEventListener('click', () => { if (cmdPalette.classList.contains('open')) closeCommandPalette(); else openCommandPalette(); });
   btnImpact.addEventListener('click', () => { cfg.effectsOn = !cfg.effectsOn; applyEffectsState(); saveConfig(); });
   btnTheme.addEventListener('click', () => { applyTheme(THEMES[(THEMES.indexOf(cfg.theme) + 1) % THEMES.length]); });
   btnFocus.addEventListener('click', () => { document.body.classList.toggle('focus-mode'); btnFocus.classList.toggle('active', document.body.classList.contains('focus-mode')); });
