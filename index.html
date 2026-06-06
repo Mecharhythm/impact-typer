@@ -4,60 +4,124 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Typer — シンプルなテキストエディタ</title>
-    <meta name="description" content="シンプルで使いやすいテキストエディタ。文字数・単語数カウント、コピー、集中モードに対応。" />
+    <meta name="description" content="シンプルで使いやすいテキストエディタ。文字数・単語数カウント、Markdown対応、検索、ダウンロード、集中モード対応。" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- Particle layer (invisible when effects off) -->
     <canvas id="particle-canvas"></canvas>
-    <!-- Flash overlay -->
     <div id="flash-overlay"></div>
 
     <div id="app">
 
-      <!-- ===== Toolbar ===== -->
+      <!-- ======= Toolbar ======= -->
       <header id="toolbar">
         <div class="toolbar-left">
           <span id="app-title">Typer</span>
-          <span class="toolbar-divider"></span>
-          <span id="doc-status" class="doc-status">新規ドキュメント</span>
+          <span class="toolbar-sep"></span>
+          <input id="doc-title" class="doc-title-input" value="新規ドキュメント" spellcheck="false" title="クリックでタイトルを編集" />
         </div>
+
+        <!-- ★ 目玉ボタン: Impact エフェクト トグル ★ -->
+        <div class="toolbar-center">
+          <button id="btn-impact-toggle" class="impact-toggle-btn" title="Impactエフェクト ON/OFF">
+            <span class="impact-icon">💥</span>
+            <span class="impact-label">IMPACT</span>
+            <span class="impact-state">OFF</span>
+          </button>
+        </div>
+
         <div class="toolbar-right">
+          <button class="tool-btn" id="btn-theme" title="テーマ切替">
+            <svg id="icon-theme-light" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg id="icon-theme-dark" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button class="tool-btn" id="btn-find" title="検索 (Ctrl+F)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+          <button class="tool-btn" id="btn-stats" title="詳細統計">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </button>
+          <button class="tool-btn" id="btn-download" title="ダウンロード">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
           <button class="tool-btn" id="btn-focus" title="集中モード (F11)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
           </button>
           <button class="tool-btn" id="btn-copy" title="コピー">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
           <button class="tool-btn" id="btn-clear" title="クリア">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
-          <div class="toolbar-divider"></div>
+          <span class="toolbar-sep"></span>
           <button class="tool-btn" id="btn-settings" title="設定">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
       </header>
 
-      <!-- ===== Editor ===== -->
+      <!-- Word goal progress bar (hidden by default) -->
+      <div id="goal-bar-wrap" style="display:none">
+        <div id="goal-bar-track">
+          <div id="goal-bar-fill"></div>
+        </div>
+        <span id="goal-bar-label">0 / 500 単語</span>
+      </div>
+
+      <!-- Find bar (hidden by default) -->
+      <div id="find-bar" style="display:none">
+        <div class="find-inner">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="find-input" type="text" placeholder="検索..." autocomplete="off" spellcheck="false" />
+          <span id="find-count" class="find-count"></span>
+          <button class="find-nav-btn" id="find-prev" title="前へ">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="find-nav-btn" id="find-next" title="次へ">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="find-nav-btn" id="find-close" title="閉じる (Esc)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ======= Editor ======= -->
       <main id="editor-area">
-        <textarea
-          id="editor"
-          placeholder="書き始めてください..."
-          spellcheck="false"
-          autocomplete="off"
-          autocorrect="off"
-        ></textarea>
+        <div id="editor-wrap">
+          <!-- Markdown toolbar -->
+          <div id="md-toolbar">
+            <button class="md-btn" data-cmd="bold"      title="太字 (Ctrl+B)"><strong>B</strong></button>
+            <button class="md-btn" data-cmd="italic"    title="斜体 (Ctrl+I)"><em>I</em></button>
+            <button class="md-btn" data-cmd="strike"    title="取り消し線"><s>S</s></button>
+            <span class="md-sep"></span>
+            <button class="md-btn" data-cmd="h1"        title="見出し1"># H1</button>
+            <button class="md-btn" data-cmd="h2"        title="見出し2">## H2</button>
+            <button class="md-btn" data-cmd="h3"        title="見出し3">### H3</button>
+            <span class="md-sep"></span>
+            <button class="md-btn" data-cmd="ul"        title="箇条書き">• UL</button>
+            <button class="md-btn" data-cmd="ol"        title="番号付き">1. OL</button>
+            <button class="md-btn" data-cmd="quote"     title="引用">" Quote</button>
+            <button class="md-btn" data-cmd="code"      title="コード">`Code`</button>
+            <button class="md-btn" data-cmd="link"      title="リンク (Ctrl+K)">🔗 Link</button>
+            <span class="md-sep"></span>
+            <button class="md-btn" data-cmd="hr"        title="区切り線">— HR</button>
+          </div>
+          <textarea
+            id="editor"
+            placeholder="書き始めてください..."
+            spellcheck="false"
+            autocomplete="off"
+            autocorrect="off"
+          ></textarea>
+        </div>
       </main>
 
-      <!-- ===== Status bar ===== -->
+      <!-- ======= Status bar ======= -->
       <footer id="statusbar">
         <div class="status-left">
           <span id="stat-chars">0 文字</span>
@@ -65,49 +129,43 @@
           <span id="stat-words">0 単語</span>
           <span class="status-sep">·</span>
           <span id="stat-lines">1 行</span>
+          <span class="status-sep">·</span>
+          <span id="stat-read">読了 0分</span>
         </div>
         <div class="status-right">
-          <!-- Effect indicators (subtle, only visible when on) -->
-          <span id="effect-indicator" class="effect-indicator" title="エフェクト設定">
-            <span id="effect-dot"></span>
-            <span id="effect-label">エフェクト: OFF</span>
-          </span>
+          <span id="autosave-label" class="autosave-label"></span>
+          <span class="status-sep">·</span>
+          <span id="cursor-pos" class="cursor-pos">1:1</span>
         </div>
       </footer>
 
     </div><!-- /#app -->
 
-    <!-- ===== Settings Panel ===== -->
+    <!-- ======= Settings Panel ======= -->
     <div id="settings-overlay"></div>
     <aside id="settings-panel">
       <div class="settings-header">
         <span class="settings-title">設定</span>
         <button id="btn-settings-close" class="settings-close">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-
       <div class="settings-body">
 
-        <!-- Editor settings -->
         <section class="settings-section">
           <h3 class="settings-section-title">エディタ</h3>
 
           <div class="settings-row">
-            <label class="settings-label">
-              <span>フォント</span>
-            </label>
+            <label class="settings-label"><span>フォント</span></label>
             <select id="set-font" class="settings-select">
+              <option value="inter" selected>Inter</option>
               <option value="jetbrains">JetBrains Mono</option>
-              <option value="inter" selected>Inter (サンセリフ)</option>
-              <option value="serif">Georgia (セリフ)</option>
+              <option value="serif">Georgia</option>
             </select>
           </div>
 
           <div class="settings-row">
-            <label class="settings-label">
-              <span>文字サイズ</span>
-            </label>
+            <label class="settings-label"><span>文字サイズ</span></label>
             <div class="range-row">
               <input type="range" id="set-fontsize" min="12" max="28" value="17" class="settings-range" />
               <span id="set-fontsize-val" class="range-val">17px</span>
@@ -115,9 +173,15 @@
           </div>
 
           <div class="settings-row">
-            <label class="settings-label">
-              <span>行の幅</span>
-            </label>
+            <label class="settings-label"><span>行間</span></label>
+            <div class="range-row">
+              <input type="range" id="set-lineheight" min="140" max="240" value="185" step="5" class="settings-range" />
+              <span id="set-lineheight-val" class="range-val">1.85</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <label class="settings-label"><span>幅</span></label>
             <select id="set-width" class="settings-select">
               <option value="narrow">狭い (560px)</option>
               <option value="medium" selected>普通 (720px)</option>
@@ -127,97 +191,100 @@
           </div>
 
           <div class="settings-row">
-            <label class="settings-label">
-              <span>テーマ</span>
-            </label>
+            <label class="settings-label"><span>テーマ</span></label>
             <select id="set-theme" class="settings-select">
               <option value="light" selected>ライト</option>
               <option value="dark">ダーク</option>
               <option value="sepia">セピア</option>
             </select>
           </div>
+
+          <div class="settings-row">
+            <label class="settings-label">
+              <span>Markdownツールバー</span>
+              <small>エディタ上部に表示</small>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="set-mdtoolbar" checked />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <label class="settings-label">
+              <span>タイプライターモード</span>
+              <small>カーソルを画面中央に固定</small>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="set-typewriter" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <label class="settings-label">
+              <span>Tabキー = スペース</span>
+              <small>Tabを4スペースに変換</small>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="set-tabspaces" checked />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
         </section>
 
-        <!-- Impact Effects section -->
+        <section class="settings-section">
+          <h3 class="settings-section-title">目標</h3>
+
+          <div class="settings-row">
+            <label class="settings-label">
+              <span>単語目標</span>
+              <small>0 = 無効</small>
+            </label>
+            <input type="number" id="set-goal" min="0" max="99999" value="0" class="settings-numbox" placeholder="0" />
+          </div>
+        </section>
+
         <section class="settings-section">
           <h3 class="settings-section-title">
             💥 Impact エフェクト
             <span class="settings-badge">隠し機能</span>
           </h3>
-          <p class="settings-note">タイピングをハリウッド映画に変える機能です。</p>
+          <p class="settings-note">タイピングをハリウッド映画に変える機能。ツールバーのボタンでもON/OFFできます。</p>
 
           <div class="settings-row">
             <label class="settings-label" for="set-effects-master">
               <span>エフェクト全体</span>
-              <small>ONにすると全機能が有効になります</small>
             </label>
-            <label class="toggle" id="toggle-effects-master">
+            <label class="toggle impact-toggle" id="toggle-effects-master">
               <input type="checkbox" id="set-effects-master" />
               <span class="toggle-track"></span>
             </label>
           </div>
 
           <div id="effects-sub" class="effects-sub disabled">
-
             <div class="settings-row sub">
-              <label class="settings-label" for="set-sound">
-                <span>爆音</span>
-                <small>キーを押すたびに鳴り響く</small>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="set-sound" checked />
-                <span class="toggle-track"></span>
-              </label>
+              <label class="settings-label" for="set-sound"><span>爆音</span></label>
+              <label class="toggle"><input type="checkbox" id="set-sound" checked /><span class="toggle-track"></span></label>
             </div>
-
             <div class="settings-row sub">
-              <label class="settings-label" for="set-particles">
-                <span>パーティクル</span>
-                <small>火花・衝撃波・紙吹雪</small>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="set-particles" checked />
-                <span class="toggle-track"></span>
-              </label>
+              <label class="settings-label" for="set-particles"><span>パーティクル</span></label>
+              <label class="toggle"><input type="checkbox" id="set-particles" checked /><span class="toggle-track"></span></label>
             </div>
-
             <div class="settings-row sub">
-              <label class="settings-label" for="set-shake">
-                <span>画面シェイク</span>
-                <small>打鍵ごとに画面が揺れる</small>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="set-shake" checked />
-                <span class="toggle-track"></span>
-              </label>
+              <label class="settings-label" for="set-shake"><span>画面シェイク</span></label>
+              <label class="toggle"><input type="checkbox" id="set-shake" checked /><span class="toggle-track"></span></label>
             </div>
-
             <div class="settings-row sub">
-              <label class="settings-label" for="set-flash">
-                <span>フラッシュ</span>
-                <small>画面が閃光を放つ</small>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="set-flash" checked />
-                <span class="toggle-track"></span>
-              </label>
+              <label class="settings-label" for="set-flash"><span>フラッシュ</span></label>
+              <label class="toggle"><input type="checkbox" id="set-flash" checked /><span class="toggle-track"></span></label>
             </div>
-
             <div class="settings-row sub">
-              <label class="settings-label" for="set-combo">
-                <span>コンボ演出</span>
-                <small>連続入力で激化する</small>
-              </label>
-              <label class="toggle">
-                <input type="checkbox" id="set-combo" checked />
-                <span class="toggle-track"></span>
-              </label>
+              <label class="settings-label" for="set-combo"><span>コンボ演出</span></label>
+              <label class="toggle"><input type="checkbox" id="set-combo" checked /><span class="toggle-track"></span></label>
             </div>
-
             <div class="settings-row sub">
-              <label class="settings-label">
-                <span>爆音モード</span>
-              </label>
+              <label class="settings-label"><span>モード</span></label>
               <select id="set-mode" class="settings-select small">
                 <option value="explosion">💣 爆発</option>
                 <option value="laser">⚡ レーザー</option>
@@ -225,50 +292,72 @@
                 <option value="nuclear">☢️ 核爆発</option>
               </select>
             </div>
-
             <div class="settings-row sub">
-              <label class="settings-label">
-                <span>強度</span>
-                <small>エフェクトの派手さ</small>
-              </label>
+              <label class="settings-label"><span>強度</span></label>
               <div class="range-row">
                 <input type="range" id="set-intensity" min="1" max="3" value="2" step="1" class="settings-range" />
                 <span id="set-intensity-val" class="range-val">中</span>
               </div>
             </div>
 
-          </div><!-- /#effects-sub -->
-        </section>
-
-        <!-- Stats (effect stats, visible only when effects on) -->
-        <section class="settings-section" id="stats-section" style="display:none">
-          <h3 class="settings-section-title">セッション統計</h3>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-val" id="stat-combo-max">0</div>
-              <div class="stat-name">最大コンボ</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-val" id="stat-kps-max">0</div>
-              <div class="stat-name">最大打鍵速度/秒</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-val" id="stat-explosions">0</div>
-              <div class="stat-name">爆発回数</div>
+            <div class="impact-session-stats">
+              <div class="stat-item"><div class="stat-val" id="stat-combo-max">0</div><div class="stat-name">最大コンボ</div></div>
+              <div class="stat-item"><div class="stat-val" id="stat-kps-max">0</div><div class="stat-name">最大打鍵/秒</div></div>
+              <div class="stat-item"><div class="stat-val" id="stat-explosions">0</div><div class="stat-name">爆発回数</div></div>
             </div>
           </div>
         </section>
 
-      </div><!-- /.settings-body -->
-
+      </div>
       <div class="settings-footer">
-        <span class="settings-version">Typer v1.0 · Impact Edition</span>
+        <span class="settings-version">Typer v2.0 · Impact Edition · コナミコード: ↑↑↓↓←→←→BA</span>
       </div>
     </aside>
 
-    <!-- Combo popup (impact mode) -->
+    <!-- Stats modal -->
+    <div id="stats-modal-overlay"></div>
+    <div id="stats-modal">
+      <div class="modal-header">
+        <span class="modal-title">📊 文書統計</span>
+        <button id="btn-stats-close" class="settings-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="stats-modal-body"></div>
+    </div>
+
+    <!-- Download modal -->
+    <div id="dl-modal-overlay"></div>
+    <div id="dl-modal">
+      <div class="modal-header">
+        <span class="modal-title">💾 ダウンロード</span>
+        <button id="btn-dl-close" class="settings-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="dl-body">
+        <p class="dl-desc">形式を選んでダウンロード</p>
+        <div class="dl-options">
+          <button class="dl-btn" id="dl-txt">
+            <span class="dl-icon">📄</span>
+            <span class="dl-name">.txt</span>
+            <span class="dl-note">プレーンテキスト</span>
+          </button>
+          <button class="dl-btn" id="dl-md">
+            <span class="dl-icon">📝</span>
+            <span class="dl-name">.md</span>
+            <span class="dl-note">Markdown</span>
+          </button>
+          <button class="dl-btn" id="dl-html">
+            <span class="dl-icon">🌐</span>
+            <span class="dl-name">.html</span>
+            <span class="dl-note">HTMLページ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="combo-popup"></div>
-    <!-- Achievement toast -->
     <div id="achievement-toast"></div>
 
     <script type="module" src="/src/main.js"></script>
