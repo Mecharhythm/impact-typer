@@ -807,7 +807,7 @@ btnAiLoad.addEventListener('click', async () => {
     const initProgressCallback = (report) => {
       btnAiLoad.textContent = Math.round(report.progress * 100) + '%';
     };
-    engine = await webllm.CreateMLCEngine('Llama-3.2-1B-Instruct-q4f16_1-MLC', { initProgressCallback });
+    engine = await webllm.CreateMLCEngine('Qwen2.5-1.5B-Instruct-q4f16_1-MLC', { initProgressCallback });
     appendAiMessage('system', 'ロード完了！ローカルAIが準備できました。');
     btnAiLoad.style.display = 'none';
     aiInput.disabled = false;
