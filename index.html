@@ -395,6 +395,27 @@
       <div id="cmd-results"></div>
     </div>
 
+    <!-- AI Chat Panel -->
+    <div id="ai-panel">
+      <div class="ai-header">
+        <span>ローカルAI アシスタント</span>
+        <svg class="ai-close" id="btn-ai-close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div id="ai-chat-log">
+        <div class="ai-msg system">※初回ロードには数GBの通信が発生します。<br><button id="btn-ai-load" class="primary-btn">AIモデルをロード</button></div>
+      </div>
+      <div id="ai-input-wrap">
+        <input type="text" id="ai-input" placeholder="質問や指示を入力..." autocomplete="off" disabled />
+        <button id="btn-ai-send" disabled>送信</button>
+      </div>
+    </div>
+
+    <!-- Challenge Mode Overlay -->
+    <div id="challenge-overlay">
+      <div class="challenge-time">⏱️ <span id="challenge-timer">60</span>s</div>
+      <div class="challenge-wpm">WPM: <span id="challenge-score">0</span></div>
+    </div>
+
     <div id="combo-popup"></div>
     <div id="achievement-toast"></div>
 

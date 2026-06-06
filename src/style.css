@@ -963,3 +963,91 @@ body.focus-mode #sidebar:hover {
   .impact-toggle-btn { padding: 6px 12px; }
   #editor-wrap { padding: 20px 16px 40px; }
 }
+
+/* ─── Zen Mode & Typewriter Mode ────── */
+body.zen-mode #sidebar,
+body.zen-mode #toolbar,
+body.zen-mode #statusbar,
+body.zen-mode #tabs-bar,
+body.zen-mode #preview-wrap {
+  display: none !important;
+}
+
+body.zen-mode #workspace-container {
+  border: none;
+}
+
+body.zen-mode .cm-content {
+  padding-top: 50vh !important;
+  padding-bottom: 50vh !important;
+}
+
+/* ─── AI Chat Panel ─────────────────── */
+#ai-panel {
+  position: fixed;
+  top: 0; right: -360px;
+  width: 360px; height: 100vh;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.1);
+  z-index: 700;
+  display: flex; flex-direction: column;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#ai-panel.open { right: 0; }
+
+.ai-header {
+  padding: 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-weight: 600;
+}
+.ai-close { cursor: pointer; opacity: 0.6; }
+.ai-close:hover { opacity: 1; }
+
+#ai-chat-log {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.ai-msg {
+  padding: 10px 14px; border-radius: var(--radius);
+  font-size: 13px; line-height: 1.5; max-width: 90%;
+  animation: fadeUp 0.3s ease;
+}
+.ai-msg.user { background: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.ai-msg.bot { background: var(--bg-input); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+.ai-msg.system { background: transparent; color: var(--text-faint); align-self: center; font-size: 11px; text-align: center; }
+
+#ai-input-wrap {
+  padding: 16px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px;
+}
+#ai-input {
+  flex: 1; padding: 8px 12px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text);
+  font-size: 13px; outline: none;
+}
+#ai-input:focus { border-color: var(--accent); }
+#btn-ai-send {
+  background: var(--accent); color: white; border: none;
+  padding: 0 16px; border-radius: var(--radius); cursor: pointer;
+}
+
+/* ─── Challenge Mode ────────────────── */
+#challenge-overlay {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.8); color: white;
+  padding: 12px 24px; border-radius: 30px;
+  z-index: 900; display: flex; align-items: center; gap: 16px;
+  font-weight: bold; font-family: 'JetBrains Mono', monospace;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+#challenge-overlay.active { opacity: 1; }
+.challenge-wpm { font-size: 24px; color: #f59e0b; }
+.challenge-time { font-size: 18px; opacity: 0.8; }
+.challenge-danger { color: #ef4444 !important; animation: blink 0.5s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  

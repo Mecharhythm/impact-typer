@@ -16,6 +16,8 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import html2pdf from 'html2pdf.js';
+import * as webllm from '@mlc-ai/web-llm';
 
 // ─── DOM ──────────────────────────────────────────────────
 const appEl       = document.getElementById('app');
@@ -88,6 +90,19 @@ const cmdOverlay  = document.getElementById('cmd-palette-overlay');
 const cmdPalette  = document.getElementById('cmd-palette');
 const cmdInput    = document.getElementById('cmd-input');
 const cmdResults  = document.getElementById('cmd-results');
+
+// AI Chat Panel
+const aiPanel     = document.getElementById('ai-panel');
+const btnAiClose  = document.getElementById('btn-ai-close');
+const aiChatLog   = document.getElementById('ai-chat-log');
+const aiInput     = document.getElementById('ai-input');
+const btnAiSend   = document.getElementById('btn-ai-send');
+const btnAiLoad   = document.getElementById('btn-ai-load');
+
+// Challenge Mode
+const challengeOverlay = document.getElementById('challenge-overlay');
+const challengeTimerEl = document.getElementById('challenge-timer');
+const challengeScoreEl = document.getElementById('challenge-score');
 
 // Impact
 const comboPopup    = document.getElementById('combo-popup');
@@ -679,6 +694,172 @@ window.addEventListener('keydown', (e) => {
     if (cmdPalette.classList.contains('open')) closeCommandPalette(); else openCommandPalette();
   }
 });
+
+// ─── v6: Zen Mode & Typewriter Scroll ─────────────────────
+let zenModeOn = false;
+function toggleZenMode() {
+  zenModeOn = !zenModeOn;
+  document.body.classList.toggle('zen-mode', zenModeOn);
+  if(editorView) {
+    // Keep cursor centered
+    editorView.dispatch({ effects: EditorView.scrollIntoView(editorView.state.selection.main, {y: "center"}) });
+  }
+}
+cmdItems.push({ title: 'Zen Mode: Toggle', hint: '究極の集中モード', action: toggleZenMode });
+
+// ─── v6: PDF Export ───────────────────────────────────────
+function exportToPDF() {
+  const element = document.getElementById('preview-container');
+  if (!element || element.innerHTML.trim() === '') {
+    alert('プレビュー画面にエクスポートする内容がありません。プレビューをONにしてテキストを入力してください。');
+    return;
+  }
+  const opt = {
+    margin:       0.5,
+    filename:     (docTitleEl.value || 'document') + '.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
+cmdItems.push({ title: 'Export: PDF', hint: 'プレビューをPDF化', action: exportToPDF });
+
+// ─── v6: Gamification (Challenge Mode) ────────────────────
+let challengeActive = false;
+let challengeTime = 60;
+let challengeTimerInterval = null;
+let challengeStartChars = 0;
+
+function startChallenge() {
+  if (challengeActive) return;
+  challengeActive = true;
+  challengeTime = 60;
+  challengeStartChars = getEditorText().length;
+  challengeOverlay.classList.add('active');
+  challengeTimerEl.textContent = challengeTime;
+  challengeScoreEl.textContent = '0';
+  
+  challengeTimerInterval = setInterval(() => {
+    challengeTime--;
+    challengeTimerEl.textContent = challengeTime;
+    
+    // Calculate current WPM roughly: ((chars - startChars) / 5) / (elapsed_minutes)
+    const elapsedMins = (60 - challengeTime) / 60;
+    const currentChars = getEditorText().length;
+    const typedWords = Math.max(0, (currentChars - challengeStartChars) / 5);
+    const wpm = elapsedMins > 0 ? Math.round(typedWords / elapsedMins) : 0;
+    challengeScoreEl.textContent = wpm;
+    
+    if (wpm < 40 && elapsedMins > 0.1) {
+      challengeScoreEl.classList.add('challenge-danger');
+      shake(1);
+    } else {
+      challengeScoreEl.classList.remove('challenge-danger');
+    }
+
+    if (challengeTime <= 0) {
+      endChallenge(wpm);
+    }
+  }, 1000);
+}
+
+function endChallenge(finalWpm) {
+  clearInterval(challengeTimerInterval);
+  challengeActive = false;
+  challengeOverlay.classList.remove('active');
+  challengeScoreEl.classList.remove('challenge-danger');
+  alert(`チャレンジ終了！\nあなたの記録: ${finalWpm} WPM`);
+  if (finalWpm > 80) {
+    for (let i=0; i<10; i++) setTimeout(() => particles.burst(Math.random()*innerWidth, Math.random()*innerHeight, 'nuclear', 3, 50), i*100);
+    sound.playNuclear(3);
+  }
+}
+cmdItems.push({ title: 'Challenge: Start 60s WPM Test', hint: 'タイピングテスト', action: startChallenge });
+
+// ─── v6: WebLLM Local AI ──────────────────────────────────
+let engine = null;
+let aiLoading = false;
+
+btnAiClose.addEventListener('click', () => aiPanel.classList.remove('open'));
+cmdItems.push({ title: 'AI Assistant: Toggle Panel', hint: 'ローカルAIを開く', action: () => aiPanel.classList.toggle('open') });
+
+function appendAiMessage(role, text) {
+  const el = document.createElement('div');
+  el.className = `ai-msg ${role}`;
+  el.textContent = text;
+  aiChatLog.appendChild(el);
+  aiChatLog.scrollTop = aiChatLog.scrollHeight;
+}
+
+btnAiLoad.addEventListener('click', async () => {
+  if (aiLoading || engine) return;
+  aiLoading = true;
+  btnAiLoad.textContent = '読み込み中...';
+  appendAiMessage('system', 'AIモデルのロードを開始しました。しばらくお待ちください...');
+  
+  try {
+    const initProgressCallback = (report) => {
+      btnAiLoad.textContent = Math.round(report.progress * 100) + '%';
+    };
+    engine = await webllm.CreateMLCEngine('Llama-3-8B-Instruct-q4f32_1-MLC', { initProgressCallback });
+    appendAiMessage('system', 'ロード完了！ローカルAIが準備できました。');
+    btnAiLoad.style.display = 'none';
+    aiInput.disabled = false;
+    btnAiSend.disabled = false;
+    aiInput.focus();
+  } catch (err) {
+    console.error(err);
+    appendAiMessage('system', 'エラー: ' + err.message);
+    btnAiLoad.textContent = 'ロード失敗 (再試行)';
+    aiLoading = false;
+  }
+});
+
+btnAiSend.addEventListener('click', async () => {
+  const q = aiInput.value.trim();
+  if (!q || !engine) return;
+  
+  aiInput.value = '';
+  aiInput.disabled = true;
+  btnAiSend.disabled = true;
+  appendAiMessage('user', q);
+  
+  // Inject editor context
+  const editorContent = getEditorText();
+  const contextMsg = editorContent ? `\n\n【現在編集中のドキュメント内容】:\n${editorContent.slice(-1500)}` : '';
+  
+  const messages = [
+    { role: 'system', content: 'あなたはTyperというエディタに内蔵された優秀なAIアシスタントです。ユーザーの執筆をサポートしてください。' },
+    { role: 'user', content: q + contextMsg }
+  ];
+  
+  const botEl = document.createElement('div');
+  botEl.className = 'ai-msg bot';
+  botEl.textContent = '...';
+  aiChatLog.appendChild(botEl);
+  aiChatLog.scrollTop = aiChatLog.scrollHeight;
+
+  try {
+    const chunks = await engine.chat.completions.create({
+      messages,
+      stream: true,
+    });
+    let reply = '';
+    for await (const chunk of chunks) {
+      reply += chunk.choices[0]?.delta?.content || '';
+      botEl.textContent = reply;
+      aiChatLog.scrollTop = aiChatLog.scrollHeight;
+    }
+  } catch (err) {
+    botEl.textContent = 'エラーが発生しました。';
+  }
+  
+  aiInput.disabled = false;
+  btnAiSend.disabled = false;
+  aiInput.focus();
+});
+aiInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') btnAiSend.click(); });
 
 
 // ─── Settings & Setup ─────────────────────────────────────
