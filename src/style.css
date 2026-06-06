@@ -566,6 +566,18 @@ mark.find-highlight {
 .cm-editor { height: 100%; outline: none !important; }
 .cm-scroller { font-family: inherit; }
 .cm-content { padding: 32px 24px 60px; max-width: var(--editor-width); margin: 0 auto; }
+.cm-gutters {
+  background: transparent !important;
+  border-right: none !important;
+  color: var(--text-faint) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 13px !important;
+  padding-right: 12px !important;
+}
+.cm-activeLineGutter {
+  background: transparent !important;
+  color: var(--accent) !important;
+}
 
 #preview-wrap {
   flex: 1;

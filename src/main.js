@@ -136,6 +136,7 @@ let editorView = null;
 // ─── Initialization ─────────────────────────────────────
 function initCodeMirror() {
   const baseExtensions = [
+    lineNumbers(),
     history(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     markdown({ base: markdownLanguage }),
