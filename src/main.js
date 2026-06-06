@@ -6,12 +6,24 @@
 import './style.css';
 import { SoundEngine } from './sound.js';
 import { ParticleSystem } from './particles.js';
+import * as idb from './idb.js';
+import * as fs from './fs.js';
 
 // ─── DOM ──────────────────────────────────────────────────
 const appEl       = document.getElementById('app');
 const editorEl    = document.getElementById('editor');
 const canvas      = document.getElementById('particle-canvas');
 const flashEl     = document.getElementById('flash-overlay');
+
+// Sidebar & Workspace
+const sidebar     = document.getElementById('sidebar');
+const btnSidebarToggle = document.getElementById('btn-sidebar-toggle');
+const btnOpenFolder = document.getElementById('btn-open-folder');
+const btnNewFile  = document.getElementById('btn-new-file');
+const btnNewFolder = document.getElementById('btn-new-folder');
+const workspaceTree = document.getElementById('workspace-tree');
+const workspaceTitle = document.getElementById('workspace-title');
+const recentFilesList = document.getElementById('recent-files');
 
 // Toolbar
 const btnImpact   = document.getElementById('btn-impact-toggle');
@@ -92,6 +104,13 @@ const doc = {
   recentKeys:[],
 };
 
+// ─── File System State ─────────────────────────────────────
+const fsState = {
+  dirHandle: null,
+  activeFileHandle: null,
+  recentFiles: [] // Array of handles
+};
+
 // ─── Achievement / Combo ──────────────────────────────────
 const COMBOS = {
   5:  {text:'NICE!',   color:'#22c55e'},
@@ -157,19 +176,31 @@ function scheduleSave() {
   autosaveLbl.textContent = '保存中...';
   autosaveLbl.classList.remove('saved');
   if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
+  saveTimer = setTimeout(async () => {
     try {
-      localStorage.setItem('typer_content', editorEl.value);
-      localStorage.setItem('typer_title', docTitleEl.value);
+      if (fsState.activeFileHandle) {
+        // Save to local file system
+        if (await fs.verifyPermission(fsState.activeFileHandle)) {
+          await fs.saveFileText(fsState.activeFileHandle, editorEl.value);
+        }
+      } else {
+        // Fallback to localStorage
+        localStorage.setItem('typer_content', editorEl.value);
+        localStorage.setItem('typer_title', docTitleEl.value);
+      }
       autosaveLbl.textContent = '保存済み';
       autosaveLbl.classList.add('saved');
       setTimeout(() => { autosaveLbl.textContent = ''; autosaveLbl.classList.remove('saved'); }, 2000);
-    } catch (e) {}
+    } catch (e) {
+      console.error('Save failed', e);
+      autosaveLbl.textContent = '保存失敗';
+    }
   }, 1200);
 }
 
 function loadSaved() {
   try {
+    if (fsState.activeFileHandle) return; // Wait for active file load instead
     const c = localStorage.getItem('typer_content');
     const t = localStorage.getItem('typer_title');
     if (c) { editorEl.value = c; updateStats(); }
@@ -816,6 +847,139 @@ function triggerKonami() {
   unlocked.add('konami');
 }
 
+// ─── Local File System / Workspace ────────────────────────
+
+btnSidebarToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('hidden');
+});
+
+btnOpenFolder.addEventListener('click', async () => {
+  const dirHandle = await fs.openWorkspace();
+  if (dirHandle) {
+    fsState.dirHandle = dirHandle;
+    await idb.set('workspace', dirHandle);
+    await refreshWorkspace();
+  }
+});
+
+btnNewFile.addEventListener('click', async () => {
+  if (!fsState.dirHandle) return;
+  const name = prompt('新しいファイル名を入力してください (例: memo.md)');
+  if (!name) return;
+  const fileHandle = await fs.createFile(fsState.dirHandle, name);
+  if (fileHandle) {
+    await refreshWorkspace();
+    await openFile(fileHandle);
+  }
+});
+
+btnNewFolder.addEventListener('click', async () => {
+  if (!fsState.dirHandle) return;
+  const name = prompt('新しいフォルダ名を入力してください');
+  if (!name) return;
+  const dirHandle = await fs.createDirectory(fsState.dirHandle, name);
+  if (dirHandle) {
+    await refreshWorkspace();
+  }
+});
+
+async function refreshWorkspace() {
+  if (!fsState.dirHandle) return;
+  if (!(await fs.verifyPermission(fsState.dirHandle, false))) {
+    workspaceTree.innerHTML = `<button id="btn-resume-workspace" class="primary-btn">フォルダへのアクセスを再開</button>`;
+    document.getElementById('btn-resume-workspace').addEventListener('click', async () => {
+      await fs.verifyPermission(fsState.dirHandle, true);
+      refreshWorkspace();
+    });
+    return;
+  }
+
+  workspaceTitle.textContent = fsState.dirHandle.name;
+  btnNewFile.style.display = 'flex';
+  btnNewFolder.style.display = 'flex';
+  
+  const entries = await fs.readDirectory(fsState.dirHandle);
+  workspaceTree.innerHTML = '';
+  renderTree(entries, workspaceTree);
+}
+
+function renderTree(entries, container, indent = 0) {
+  for (const entry of entries) {
+    const el = document.createElement('div');
+    el.className = 'tree-item' + (fsState.activeFileHandle && fsState.activeFileHandle.name === entry.name ? ' active' : '');
+    el.style.paddingLeft = `${16 + indent * 16}px`;
+    el.title = entry.name;
+    
+    if (entry.kind === 'directory') {
+      el.innerHTML = `<span class="tree-icon">📁</span> ${entry.name}`;
+      container.appendChild(el);
+      // Simple recursion for directories
+      if (entry.children && entry.children.length > 0) {
+        renderTree(entry.children, container, indent + 1);
+      }
+    } else {
+      el.innerHTML = `<span class="tree-icon">📄</span> ${entry.name}`;
+      el.addEventListener('click', () => openFile(entry.handle));
+      container.appendChild(el);
+    }
+  }
+}
+
+async function openFile(fileHandle) {
+  if (!(await fs.verifyPermission(fileHandle, true))) return;
+  try {
+    const text = await fs.readFileText(fileHandle);
+    editorEl.value = text;
+    fsState.activeFileHandle = fileHandle;
+    docTitleEl.value = fileHandle.name;
+    updateStats();
+    
+    // Add to recents
+    fsState.recentFiles = fsState.recentFiles.filter(h => h.name !== fileHandle.name);
+    fsState.recentFiles.unshift(fileHandle);
+    if (fsState.recentFiles.length > 10) fsState.recentFiles.pop();
+    await idb.set('recents', fsState.recentFiles);
+    
+    renderRecents();
+    refreshWorkspace(); // Re-render to highlight active file
+  } catch (e) {
+    console.error('Failed to read file', e);
+    alert('ファイルの読み込みに失敗しました。');
+  }
+}
+
+function renderRecents() {
+  recentFilesList.innerHTML = '';
+  if (fsState.recentFiles.length === 0) {
+    recentFilesList.innerHTML = '<div class="sidebar-desc">最近開いたファイルはありません</div>';
+    return;
+  }
+  for (const handle of fsState.recentFiles) {
+    const el = document.createElement('div');
+    el.className = 'tree-item';
+    el.innerHTML = `<span class="tree-icon">📄</span> ${handle.name}`;
+    el.addEventListener('click', () => openFile(handle));
+    recentFilesList.appendChild(el);
+  }
+}
+
+async function loadFileSystemState() {
+  try {
+    const ws = await idb.get('workspace');
+    if (ws) {
+      fsState.dirHandle = ws;
+      await refreshWorkspace();
+    }
+    const recents = await idb.get('recents');
+    if (recents && Array.isArray(recents)) {
+      fsState.recentFiles = recents;
+      renderRecents();
+    }
+  } catch (e) {
+    console.error('Error loading FS state from IDB', e);
+  }
+}
+
 // ─── Init ─────────────────────────────────────────────────
 loadConfig();
 bindSettings();
@@ -830,10 +994,12 @@ document.getElementById('md-toolbar').style.display = cfg.mdToolbar ? '' : 'none
 document.body.classList.toggle('typewriter-mode', cfg.typewriter);
 
 loadSaved();
+loadFileSystemState();
+
 editorEl.focus();
 if (editorEl.value) {
   editorEl.setSelectionRange(editorEl.value.length, editorEl.value.length);
   updateStats(); updateCursor();
 }
 
-console.log('%c Typer v2 · Impact Edition ','background:#f97316;color:white;font-weight:bold;padding:2px 8px;border-radius:4px','\nコナミ: ↑↑↓↓←→←→BA');
+console.log('%c Typer v4 · Local FS Edition ','background:#f97316;color:white;font-weight:bold;padding:2px 8px;border-radius:4px','\nコナミ: ↑↑↓↓←→←→BA');
